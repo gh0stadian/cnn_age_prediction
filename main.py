@@ -3,6 +3,7 @@ import torch
 import pytorch_lightning as pl
 import wandb
 from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from torch.utils.data import DataLoader, random_split
 
@@ -16,7 +17,7 @@ wandb.init(
     project="test-project",
     entity="jbdb",
     config={
-        'epoch': 1,
+        'epoch': 100,
         'batch_size': 10,
         'lr': 0.01,
     }
@@ -24,7 +25,7 @@ wandb.init(
 wandb_logger = WandbLogger(log_model=True)
 
 df = pd.read_csv("cured_imdb.csv", low_memory=False)
-num_classes = df['age'].max()
+num_classes = df['age'].max() + 1
 
 dataset = FaceDataset(dataframe=df,
                       img_root_dir='imdb_crop/',
@@ -45,10 +46,14 @@ criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
 
 model = Model(model, criterion, optimizer)
+
+checkpoint_callback = ModelCheckpoint(dirpath="checkpoints/", save_top_k=2, monitor="val/loss")
+early_stop_callback = EarlyStopping(monitor="val/loss", patience=3, mode="min")
 trainer = pl.Trainer(gpus=1,
                      benchmark=True,
                      logger=wandb_logger,
                      max_epochs=1,
-                     devices=1
+                     devices=1,
+                     callbacks=[checkpoint_callback, early_stop_callback]
                      )
 trainer.fit(model, train_loader, valid_loader)
