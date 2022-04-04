@@ -13,14 +13,15 @@ class FaceDataset(Dataset):
         self.img_root_dir = img_root_dir
         self.num_classes = num_classes
         self.transform = transform
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def __len__(self):
         return len(self.dataframe)
 
     def __getitem__(self, idx):
         img = self.get_img(idx)
-        age = F.one_hot(torch.tensor(self.dataframe['age'][idx]), num_classes=self.num_classes).to(dtype=torch.float32)
+        age = torch.tensor(self.dataframe['age'][idx]).to(dtype=torch.float32)
+        if self.num_classes > 1:
+            age = F.one_hot(age, num_classes=self.num_classes).to(dtype=torch.float32)
         name = str(self.dataframe['name'][idx])
 
         if self.transform:
