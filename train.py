@@ -39,5 +39,6 @@ class PLModel(pl.LightningModule):
         # for categorical only
         # _, y_pred_indices = y_pred.topk(1)
         # _, y_true_indices = y_true.topk(1)
-        rmse = torch.sqrt(torch.square(y_pred) - torch.square(y_true)).float().mean()
+        diff = torch.square(y_pred) - torch.square(y_true)
+        rmse = torch.sqrt(torch.abs(diff)).float().mean()
         return rmse
