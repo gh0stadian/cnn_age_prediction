@@ -3,7 +3,7 @@ import torch
 import datetime
 
 from torchvision import transforms
-from models.models import get_baseline_model, get_pretrained_model_resnet18, get_pretrained_model_resnet50
+from models.models import get_base_model, get_pretrained_model_resnet18, get_pretrained_model_resnet50
 from torchsummary import summary
 
 timestamp = datetime.datetime.now().strftime("%d%m_%I%M%S")
@@ -14,28 +14,27 @@ wandb = wandb.init(
     config={
         'epoch': 100,
         'batch_size': 64,
-        'lr': 0.001,
+        'lr': 0.01,
         'es_patience': 5,
+        'scheduler_patience': 1,
+        'scheduler_factor': 0.2,
         'dataset_path': "cured_imdb.csv",
         'img_root_dir': "imdb_crop/",
-        'checkpoint': datetime.datetime.now().strftime("%d%m_%I%M%S")
+        'checkpoint': datetime.datetime.now().strftime("%d%m_%I%M%S"),
+        'model_config': {
+            'model_name': "base",
+            'classification_layers': [],
+            'conv_layers': [32, 64, 128],
+            'num_classes': 1
+        }
     }
 )
 
-# zero_h flag would ignore linear layer sizes
-classification_params = {"lin_1_size": 64,
-                         'lin_2_size': 32,
-                         'num_classes': 1,
-                         'zero_h': True
-                         }
-
-conv_params = {'conv_1_size': 32,
-               'conv_2_size': 64,
-               'conv_3_size': 128,
-               'conv_4_size': 256}
-
-model = get_baseline_model(**conv_params, **classification_params)
-
+model = get_base_model(conv_layers=wandb.config['model_config']['conv_layers'],
+                       conv_kernels=None,
+                       fc_layers=wandb.config['model_config']['classification_layers'],
+                       num_classes=wandb.config['model_config']['num_classes']
+                       )
 optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
 
 criterion = torch.nn.L1Loss()

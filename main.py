@@ -13,8 +13,9 @@ from train import PLModel
 wandb_logger = WandbLogger(log_model=True)
 
 df = pd.read_csv(wandb.config['dataset_path'], low_memory=False)
-# TODO sample only for debug, remove before training
-df = df.sample(n=5000).reset_index()
+
+# # TODO sample only for debug, remove before training
+# df = df.sample(n=5000).reset_index()
 
 dataset = FaceDataset(dataframe=df,
                       img_root_dir=wandb.config['img_root_dir'],
@@ -23,7 +24,7 @@ dataset = FaceDataset(dataframe=df,
                       )
 
 # TODO split csv files instead
-valid_test_length = round(len(dataset) * 0.15)
+valid_test_length = round(len(dataset) * 0.2)
 lengths = [len(dataset) - 2 * valid_test_length, valid_test_length, valid_test_length]
 train_dataset, valid_dataset, test_dataset = random_split(dataset, lengths)
 
