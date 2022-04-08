@@ -3,7 +3,8 @@ import pretrainedmodels.utils
 import torchvision
 import torch.nn as nn
 
-from .custom_models.baseline_model import BaselineModel, ConvModel
+from .custom_models.baseline_model import ConvModel
+from .custom_models.double_conv_model import DoubleConvModel
 
 
 def get_pretrained_model_resnet50(num_classes=1):
@@ -29,6 +30,19 @@ def get_base_model(conv_layers, conv_kernels, fc_layers, num_classes=1):
                           lin_layers=fc_layers,
                           num_classes=num_classes
                           )
+    else:
+        raise ValueError('Layers cannot be empty')
+    return model
+
+
+def get_double_conv(conv_layers, conv_kernels, fc_layers, num_classes=1):
+    if len(conv_layers) != 0:
+        model = DoubleConvModel(conv_layers=conv_layers,
+                                in_channels=3,
+                                kernel_sizes=conv_kernels,
+                                lin_layers=fc_layers,
+                                num_classes=num_classes
+                                )
     else:
         raise ValueError('Layers cannot be empty')
     return model

@@ -14,9 +14,6 @@ wandb_logger = WandbLogger(log_model=True)
 
 df = pd.read_csv(wandb.config['dataset_path'], low_memory=False)
 
-# # TODO sample only for debug, remove before training
-# df = df.sample(n=5000).reset_index()
-
 dataset = FaceDataset(dataframe=df,
                       img_root_dir=wandb.config['img_root_dir'],
                       num_classes=1,
@@ -48,3 +45,4 @@ trainer = pl.Trainer(gpus=1,
                      )
 
 trainer.fit(model, train_loader, valid_loader)
+wandb.finish()

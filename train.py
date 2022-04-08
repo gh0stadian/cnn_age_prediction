@@ -29,7 +29,8 @@ class PLModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         img, y_true, name = batch
-        y_pred = self.model.forward(img).unsqueeze(1)
+        y_pred = self.model.forward(img)
+        y_true = y_true.unsqueeze(1)
         loss = self.criterion(y_pred, y_true)
         self.log('train/loss', loss)
         self.log('train/mae', self.calculate_mae(y_pred, y_true))
@@ -37,12 +38,13 @@ class PLModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         img, y_true, name = batch
-        y_pred = self.model.forward(img).unsqueeze(1)
+        y_pred = self.model.forward(img)
+        y_true = y_true.unsqueeze(1)
         loss = self.criterion(y_pred, y_true)
         self.log('val/loss', loss)
         self.log('val/mae', self.calculate_mae(y_pred, y_true))
         self.log('val/rmse', self.calculate_rmse(y_pred, y_true))
-        return {"val/loss": loss}
+        return loss
 
     def calculate_mae(self, y_pred, y_true):
         mae = torch.abs(y_pred - y_true).float().mean()
