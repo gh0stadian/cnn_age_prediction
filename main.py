@@ -18,7 +18,7 @@ train_dataset = FaceDataset(dataframe=train_df,
                             transform=img_transforms
                             )
 
-test_dataset = FaceDataset(dataframe=train_df,
+test_dataset = FaceDataset(dataframe=test_df,
                            img_root_dir=wandb.config['img_root_dir'],
                            num_classes=1,
                            transform=img_transforms
