@@ -6,7 +6,7 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from torch.utils.data import DataLoader, random_split
 
-from config import wandb, criterion, img_transforms, model, optimizer, scheduler
+from config import wandb, criterion, img_transforms, model, optimizer
 from dataset import FaceDataset
 from train import PLModel
 
@@ -29,7 +29,13 @@ train_loader = DataLoader(train_dataset, batch_size=wandb.config['batch_size'], 
 valid_loader = DataLoader(valid_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 
-model = PLModel(model, criterion, optimizer, scheduler)
+# Calibrate loss to reflect class imbalance
+# criterion.calibrate(df)
+
+model = PLModel(model, criterion, optimizer)
+
+
+wandb_logger.watch(model)
 
 checkpoint_callback = ModelCheckpoint(dirpath=f"checkpoints/{wandb.config['checkpoint']}/",
                                       save_top_k=2,
