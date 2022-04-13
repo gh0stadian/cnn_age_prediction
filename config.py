@@ -3,7 +3,7 @@ import torch
 import datetime
 
 from torchvision import transforms
-from models.models import get_base_model, get_double_conv
+from models.models import get_base_model, get_double_conv, get_resnet, get_adaptive_model
 from torchsummary import summary
 from optimizations import MSELoss_age_multiplied
 
@@ -41,13 +41,9 @@ model = get_adaptive_model(conv_layers=wandb.config['model_config']['conv_layers
 
 optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
 
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100)
-
-# criterion = torch.nn.MSELoss()
-criterion = MSELoss_age_multiplied()
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.8)
-
 criterion = torch.nn.MSELoss()
+# criterion = MSELoss_age_multiplied()
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.8)
 
 img_transforms = transforms.Compose([transforms.Resize((224, 224)),
                                      transforms.Normalize(mean=[0.485, 0.456, 0.406],
