@@ -20,8 +20,8 @@ class AdaptiveModel(nn.Module):
 
         self.adaptive = nn.AdaptiveAvgPool2d(output_size=(7, 7))
 
-        in_features = 12544
-        # in_features = int(((224 / pow(2, len(conv_layers))) ** 2) * conv_layers[-1])
+        # in_features = 12544
+        in_features = int(((224 / pow(2, len(conv_layers))) ** 2) * conv_layers[-1])
         for layer_size in lin_layers:
             self.lin_layers.append(nn.Linear(in_features, layer_size))
             in_features = layer_size

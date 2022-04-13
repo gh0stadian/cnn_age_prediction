@@ -1,6 +1,7 @@
 import wandb
 import torch
 import datetime
+import pandas as pd
 
 from torchvision import transforms
 from models.models import get_base_model, get_double_conv, get_resnet, get_adaptive_model
@@ -14,36 +15,47 @@ wandb = wandb.init(
     entity="jbdb",
     config={
         'epoch': 100,
-        'batch_size': 32,
+        'batch_size': 64,
         'lr': 0.01,
         'es_patience': 5,
-        'scheduler_patience': 3,
-        'scheduler_factor': 0.2,
-        'dataset_path': "oversampled.csv",
+        'scheduler_step_size': 1,
+        'scheduler_gamma': 0.8,
+        'train_dataset': "datasets/train.csv",
+        'test_dataset': "datasets/test.csv",
+        'test_log_dataset': "datasets/log.csv",
         'img_root_dir': "imdb_crop/",
         'checkpoint': datetime.datetime.now().strftime("%d%m_%I%M%S"),
         'model_config': {
-            'model_name': "double_conv",
+            'model_name': "base",
             'classification_layers': [],
-            'conv_layers': [8, 16, 32, 64, 128],
+            'conv_layers': [8, 16, 32, 64],
             'num_classes': 1
         }
     }
 )
 
-model = get_adaptive_model(conv_layers=wandb.config['model_config']['conv_layers'],
-                           conv_kernels=None,
-                           fc_layers=wandb.config['model_config']['classification_layers'],
-                           num_classes=wandb.config['model_config']['num_classes']
-                           )
-
+model = get_base_model(conv_layers=wandb.config['model_config']['conv_layers'],
+                       conv_kernels=None,
+                       fc_layers=wandb.config['model_config']['classification_layers'],
+                       num_classes=wandb.config['model_config']['num_classes']
+                       )
 # model = get_resnet()
 
 optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
 
+train_df = pd.read_csv(wandb.config['train_dataset'], low_memory=False)
+test_df = pd.read_csv(wandb.config['test_dataset'], low_memory=False)
+test_log_df = pd.read_csv(wandb.config['test_log_dataset'], low_memory=False)
 criterion = torch.nn.MSELoss()
+
 # criterion = MSELoss_age_multiplied()
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.8)
+# Calibrate loss to reflect class imbalance
+# criterion.calibrate(df)
+
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                            step_size=wandb.config['scheduler_step_size'],
+                                            gamma=wandb.config['scheduler_gamma']
+                                            )
 
 img_transforms = transforms.Compose([transforms.Resize((224, 224)),
                                      transforms.Normalize(mean=[0.485, 0.456, 0.406],

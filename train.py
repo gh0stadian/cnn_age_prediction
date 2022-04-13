@@ -1,6 +1,7 @@
 import torch
 from config import wandb
 import pytorch_lightning as pl
+import wandb as w_and_b
 
 
 class PLModel(pl.LightningModule):
@@ -43,13 +44,21 @@ class PLModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         img, y_true, name = batch
-        y_pred = self.model.forward(img)
-        y_true = y_true.unsqueeze(1)
-        loss = self.criterion(y_pred, y_true)
-        self.log('val/loss', loss)
-        self.log('val/mae', self.calculate_mae(y_pred, y_true))
-        self.log('val/rmse', self.calculate_rmse(y_pred, y_true))
-        return loss
+        if len(img) <= 10 and batch_idx == 0:
+            for i in zip(img, y_true, name):
+                image, label, actor_name = i
+                y_pred = self.model.forward(image[None, :])
+                log_img = [
+                    w_and_b.Image(image, caption=f"Predicted: {y_pred.item()}, True: {label}, name: {actor_name}")]
+                self.logger.log_image(key="images", images=log_img)
+        else:
+            y_pred = self.model.forward(img)
+            y_true = y_true.unsqueeze(1)
+            loss = self.criterion(y_pred, y_true)
+            self.log('test/loss', loss)
+            self.log('test/mae', self.calculate_mae(y_pred, y_true))
+            self.log('test/rmse', self.calculate_rmse(y_pred, y_true))
+            return loss
 
     def calculate_mae(self, y_pred, y_true):
         mae = torch.abs(y_pred - y_true).float().mean()

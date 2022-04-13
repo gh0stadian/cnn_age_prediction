@@ -6,34 +6,40 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from torch.utils.data import DataLoader, random_split
 
-from config import wandb, criterion, img_transforms, model, optimizer
+from config import wandb, criterion, img_transforms, model, optimizer, test_df, train_df, test_log_df
 from dataset import FaceDataset
 from train import PLModel
 
 wandb_logger = WandbLogger(log_model=True)
 
-df = pd.read_csv(wandb.config['dataset_path'], low_memory=False)
+train_dataset = FaceDataset(dataframe=train_df,
+                            img_root_dir=wandb.config['img_root_dir'],
+                            num_classes=1,
+                            transform=img_transforms
+                            )
 
-dataset = FaceDataset(dataframe=df,
-                      img_root_dir=wandb.config['img_root_dir'],
-                      num_classes=1,
-                      transform=img_transforms
-                      )
+test_dataset = FaceDataset(dataframe=train_df,
+                           img_root_dir=wandb.config['img_root_dir'],
+                           num_classes=1,
+                           transform=img_transforms
+                           )
 
-# TODO split csv files instead
-valid_test_length = round(len(dataset) * 0.2)
-lengths = [len(dataset) - 2 * valid_test_length, valid_test_length, valid_test_length]
-train_dataset, valid_dataset, test_dataset = random_split(dataset, lengths)
+log_dataset = FaceDataset(dataframe=test_log_df,
+                          img_root_dir=wandb.config['img_root_dir'],
+                          num_classes=1,
+                          transform=img_transforms
+                          )
+
+valid_test_length = round(len(train_dataset) * 0.2)
+lengths = [len(train_dataset) - valid_test_length, valid_test_length]
+train_dataset, valid_dataset = random_split(train_dataset, lengths)
 
 train_loader = DataLoader(train_dataset, batch_size=wandb.config['batch_size'], shuffle=True)
 valid_loader = DataLoader(valid_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
-
-# Calibrate loss to reflect class imbalance
-# criterion.calibrate(df)
+log_loader = DataLoader(log_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 
 model = PLModel(model, criterion, optimizer)
-
 
 wandb_logger.watch(model)
 
@@ -52,5 +58,6 @@ trainer = pl.Trainer(gpus=1,
                      )
 
 trainer.fit(model, train_loader, valid_loader)
-trainer.test(ckpt_path="best")
+trainer.test(dataloaders=test_loader)
+trainer.test(dataloaders=log_loader)
 wandb.finish()
