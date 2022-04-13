@@ -4,22 +4,16 @@ import pytorch_lightning as pl
 
 
 class PLModel(pl.LightningModule):
-    def __init__(self, model, criterion, optimizer):
+    def __init__(self, model, criterion, optimizer, scheduler=None):
         super().__init__()
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
 
     def configure_optimizers(self):
-        if 'scheduler_patience' in wandb.config and 'scheduler_factor' in wandb.config:
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
-                                                                   mode='min',
-                                                                   factor=wandb.config['scheduler_factor'],
-                                                                   patience=wandb.config['scheduler_patience'],
-                                                                   min_lr=1e-6,
-                                                                   verbose=True
-                                                                   )
-            return {'optimizer': self.optimizer, 'lr_scheduler': scheduler, 'monitor': 'val/loss'}
+        if self.scheduler is not None:
+            return {'optimizer': self.optimizer, 'lr_scheduler': self.scheduler, 'monitor': 'val/loss'}
 
         else:
             return self.optimizer
@@ -34,9 +28,20 @@ class PLModel(pl.LightningModule):
         loss = self.criterion(y_pred, y_true)
         self.log('train/loss', loss)
         self.log('train/mae', self.calculate_mae(y_pred, y_true))
+        self.log('train/rmse', self.calculate_rmse(y_pred, y_true))
         return loss
 
     def validation_step(self, batch, batch_idx):
+        img, y_true, name = batch
+        y_pred = self.model.forward(img)
+        y_true = y_true.unsqueeze(1)
+        loss = self.criterion(y_pred, y_true)
+        self.log('val/loss', loss)
+        self.log('val/mae', self.calculate_mae(y_pred, y_true))
+        self.log('val/rmse', self.calculate_rmse(y_pred, y_true))
+        return loss
+
+    def test_step(self, batch, batch_idx):
         img, y_true, name = batch
         y_pred = self.model.forward(img)
         y_true = y_true.unsqueeze(1)
