@@ -6,7 +6,7 @@ import torch.nn as nn
 from .custom_models.adaptive_model import AdaptiveModel
 from .custom_models.baseline_model import ConvModel
 from .custom_models.double_conv_model import DoubleConvModel
-from .custom_models.resnet_model import ResNet, Bottleneck
+from .custom_models.resnet_model import ResNet
 
 
 def get_pretrained_model_resnet50(num_classes=1):
@@ -50,10 +50,8 @@ def get_double_conv(conv_layers, conv_kernels, fc_layers, num_classes=1):
     return model
 
 
-def get_resnet():
-    # return ResNet(BasicBlock, [2, 2, 2, 2])  # RESNET18
-    # return ResNet(BasicBlock, [3, 4, 6, 3])  # RESNET34
-    return ResNet(Bottleneck, [3, 4, 6, 3], 1, 3)
+def get_resnet(block, layer_size_list, num_classes=1):
+    return ResNet(block, layer_size_list, num_classes)
 
 
 def get_adaptive_model(conv_layers, conv_kernels, fc_layers, num_classes=1):
