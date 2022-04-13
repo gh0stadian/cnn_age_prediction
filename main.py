@@ -29,7 +29,16 @@ train_loader = DataLoader(train_dataset, batch_size=wandb.config['batch_size'], 
 valid_loader = DataLoader(valid_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=wandb.config['batch_size'], shuffle=False)
 
+# Calibrate loss to reflect class imbalance
+# criterion.calibrate(df)
+
+torch.cuda.empty_cache()
+
+criterion = torch.nn.MSELoss()
+
 model = PLModel(model, criterion, optimizer)
+
+wandb_logger.watch(model)
 
 checkpoint_callback = ModelCheckpoint(dirpath=f"checkpoints/{wandb.config['checkpoint']}/",
                                       save_top_k=2,

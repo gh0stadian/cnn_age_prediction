@@ -4,22 +4,23 @@ import pytorch_lightning as pl
 
 
 class PLModel(pl.LightningModule):
-    def __init__(self, model, criterion, optimizer):
+    def __init__(self, model, criterion, optimizer, scheduler=None):
         super().__init__()
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
 
     def configure_optimizers(self):
-        if 'scheduler_patience' in wandb.config and 'scheduler_factor' in wandb.config:
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+        if not self.scheduler:
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
                                                                    mode='min',
                                                                    factor=wandb.config['scheduler_factor'],
                                                                    patience=wandb.config['scheduler_patience'],
                                                                    min_lr=1e-6,
                                                                    verbose=True
                                                                    )
-            return {'optimizer': self.optimizer, 'lr_scheduler': scheduler, 'monitor': 'val/loss'}
+            return {'optimizer': self.optimizer, 'lr_scheduler': self.scheduler, 'monitor': 'val/loss'}
 
         else:
             return self.optimizer
