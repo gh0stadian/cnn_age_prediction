@@ -28,7 +28,7 @@ wandb = wandb.init(
         'checkpoint': datetime.datetime.now().strftime("%d%m_%I%M%S"),
         'model_config': {
             'model_name': "resnet",
-            'classification_layers': [],
+            'classification_layers': [32],
             'conv_layers': [64, 128, 256, 512, 1024],
             'num_classes': 1
         }

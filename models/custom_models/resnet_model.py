@@ -84,6 +84,7 @@ class ResNet(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
         in_features = channel_list[-1]
+
         if linear_layers is not None:
             for layer_size in linear_layers:
                 self.lin_layers.append(nn.Linear(in_features, layer_size))
@@ -101,7 +102,7 @@ class ResNet(nn.Module):
         x = self.avg_pool(x)
         x = x.reshape(x.shape[0], -1)
 
-        for layer in self.lin_layers():
+        for layer in self.lin_layers:
             x = layer(x)
         x = self.fc(x)
 
