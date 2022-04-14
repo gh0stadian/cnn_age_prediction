@@ -37,6 +37,8 @@ class ResBatchNormBlock(nn.Module):
 
     def __init__(self, in_channels, out_channels, stride=(1, 1)):
         super(ResBatchNormBlock, self).__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
 
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), padding=1, stride=stride, bias=False)
         self.batch_norm1 = nn.BatchNorm2d(out_channels)
@@ -63,9 +65,10 @@ class ResBatchNormBlock(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, Block, channel_list, num_classes=1):
+    def __init__(self, Block, channel_list, num_classes=1, linear_layers=None):
         super(ResNet, self).__init__()
         in_features = 64
+        self.lin_layers = nn.ModuleList()
 
         self.conv1 = nn.Conv2d(3, in_features, kernel_size=(7, 7), stride=(2, 2), padding=3, bias=False)
         self.batch_norm1 = nn.BatchNorm2d(in_features)
@@ -79,7 +82,14 @@ class ResNet(nn.Module):
             in_features = out_features
 
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(channel_list[-1], num_classes)
+
+        in_features = channel_list[-1]
+        if linear_layers is not None:
+            for layer_size in linear_layers:
+                self.lin_layers.append(nn.Linear(in_features, layer_size))
+                in_features = layer_size
+
+        self.fc = nn.Linear(in_features, num_classes)
 
     def forward(self, x):
         x = self.relu(self.batch_norm1(self.conv1(x)))
@@ -90,6 +100,9 @@ class ResNet(nn.Module):
 
         x = self.avg_pool(x)
         x = x.reshape(x.shape[0], -1)
+
+        for layer in self.lin_layers():
+            x = layer(x)
         x = self.fc(x)
 
         return x

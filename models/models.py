@@ -50,8 +50,8 @@ def get_double_conv(conv_layers, conv_kernels, fc_layers, num_classes=1):
     return model
 
 
-def get_resnet(block, layer_size_list, num_classes=1):
-    return ResNet(block, layer_size_list, num_classes)
+def get_resnet(block, layer_size_list, num_classes=1, lin_layers=None):
+    return ResNet(block, layer_size_list, num_classes, lin_layers)
 
 
 def get_adaptive_model(conv_layers, conv_kernels, fc_layers, num_classes=1):

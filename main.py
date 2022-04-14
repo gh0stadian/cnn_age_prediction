@@ -27,7 +27,7 @@ test_dataset = FaceDataset(dataframe=test_df,
 log_dataset = FaceDataset(dataframe=test_log_df,
                           img_root_dir=wandb.config['img_root_dir'],
                           num_classes=1,
-                          transform=img_transforms
+                          transform=img_transformsa
                           )
 
 valid_test_length = round(len(train_dataset) * 0.2)

@@ -29,15 +29,16 @@ wandb = wandb.init(
         'model_config': {
             'model_name': "resnet",
             'classification_layers': [],
-            'conv_layers': [64, 128, 256, 512],
+            'conv_layers': [64, 128, 256, 512, 1024],
             'num_classes': 1
         }
     }
 )
 
-model = get_resnet(ResBlock,
+model = get_resnet(ResBatchNormBlock,
                    wandb.config['model_config']['conv_layers'],
-                   num_classes=wandb.config['model_config']['num_classes']
+                   num_classes=wandb.config['model_config']['num_classes'],
+                   lin_layers=wandb.config['model_config']['classification_layers'],
                    )
 
 optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
@@ -45,11 +46,13 @@ optimizer = torch.optim.Adam(model.parameters(), lr=wandb.config['lr'])
 train_df = pd.read_csv(wandb.config['train_dataset'], low_memory=False)
 test_df = pd.read_csv(wandb.config['test_dataset'], low_memory=False)
 test_log_df = pd.read_csv(wandb.config['test_log_dataset'], low_memory=False)
-criterion = torch.nn.MSELoss()
 
-# criterion = MSELoss_age_multiplied()
+# criterion = torch.nn.MSELoss()
+
+
 # Calibrate loss to reflect class imbalance
-# criterion.calibrate(df)
+criterion = MSELoss_age_multiplied()
+criterion.calibrate(train_df)
 
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
                                             step_size=wandb.config['scheduler_step_size'],
